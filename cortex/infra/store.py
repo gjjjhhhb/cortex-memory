@@ -82,6 +82,13 @@ class CortexStore:
 
     async def create(self, table: str, data: dict[str, Any]) -> dict[str, Any]:
         assert self.db is not None
+        if table == "relation":
+            sql = "CREATE relation CONTENT $data;"
+            res = await self.db.query(sql, {"data": data})
+            unwrapped = unwrap_query_result(res)
+            if isinstance(unwrapped, list) and len(unwrapped) > 0:
+                return unwrapped[0]
+            return unwrapped if isinstance(unwrapped, dict) else {}
         res = await self.db.create(table, data)
         if isinstance(res, list) and len(res) > 0:
             return res[0]

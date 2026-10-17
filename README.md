@@ -31,8 +31,14 @@ uv sync --extra dev
 Set your provider credentials in `.env`:
 
 ```env
-OPENAI_API_KEY="your_llm_api_key_here"
-EMBEDDING_API_KEY="your_embedding_api_key_here"
+LLM_API_KEY="your_llm_api_key_here"
+LLM_BASE_URL="https://api.your-provider.com/v1"
+LLM_MODEL="your-model-name"
+
+EMBEDDER_API_KEY="your_embedder_api_key_here"
+EMBEDDER_BASE_URL="https://api.your-provider.com/v1"
+EMBEDDER_MODEL="your-embedding-model-name"
+EMBEDDER_DIMENSION=1536
 ```
 
 Server and provider settings are configured in `config.toml` (or overridden via `CORTEX_*` environment variables):
@@ -50,16 +56,16 @@ namespace = "cortex"
 
 [llm]
 provider = "openai"
-base_url = "https://api.openai.com/v1"
-api_key = "env:OPENAI_API_KEY"
-model = "gpt-4o-mini"
+base_url = "env:LLM_BASE_URL"
+api_key = "env:LLM_API_KEY"
+model = "env:LLM_MODEL"
 temperature = 0.0
 
 [embedding]
 provider = "openai"
-base_url = "https://api.openai.com/v1"
-api_key = "env:EMBEDDING_API_KEY"
-model = "text-embedding-3-small"
+base_url = "env:EMBEDDER_BASE_URL"
+api_key = "env:EMBEDDER_API_KEY"
+model = "env:EMBEDDER_MODEL"
 dimension = 1536
 cache_size = 10000
 ```

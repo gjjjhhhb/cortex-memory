@@ -45,7 +45,7 @@ DEFINE FIELD IF NOT EXISTS labels ON TABLE attribute TYPE array<string> DEFAULT 
 DEFINE FIELD IF NOT EXISTS embedding ON TABLE attribute TYPE array<float>;
 
 -- 4. Relations
-DEFINE TABLE IF NOT EXISTS relation SCHEMAFULL;
+DEFINE TABLE IF NOT EXISTS relation TYPE NORMAL SCHEMAFULL;
 DEFINE FIELD IF NOT EXISTS source_entity ON TABLE relation TYPE string;
 DEFINE FIELD IF NOT EXISTS target_entity ON TABLE relation TYPE string;
 DEFINE FIELD IF NOT EXISTS predicate ON TABLE relation TYPE string;

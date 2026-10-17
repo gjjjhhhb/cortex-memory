@@ -9,8 +9,10 @@ from cortex import create_app, get_ai_provider
 @pytest.fixture(scope="session")
 def live_config():
     cfg = load_config()
-    if not (cfg.llm.api_key and cfg.embedding.api_key):
-        pytest.skip("No live LLM or Embedding API keys found in config/environment.")
+    has_valid_llm = bool(cfg.llm.api_key and cfg.llm.base_url.startswith(("http://", "https://")))
+    has_valid_emb = bool(cfg.embedding.api_key and cfg.embedding.base_url.startswith(("http://", "https://")))
+    if not (has_valid_llm and has_valid_emb):
+        pytest.skip("No live LLM or Embedding API keys and URLs found in config/environment.")
     return cfg
 
 

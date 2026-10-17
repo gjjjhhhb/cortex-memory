@@ -10,16 +10,16 @@ namespace = "cortex"
 
 [llm]
 provider = "openai"
-base_url = "https://api.openai.com/v1"
-api_key = "env:OPENAI_API_KEY"
-model = "gpt-4o-mini"
+base_url = "env:LLM_BASE_URL"
+api_key = "env:LLM_API_KEY"
+model = "env:LLM_MODEL"
 temperature = 0.0
 structured_output_mode = "json_object"
 
 [embedding]
 provider = "openai"
-base_url = "https://api.openai.com/v1"
-api_key = "env:EMBEDDING_API_KEY"
-model = "text-embedding-3-small"
+base_url = "env:EMBEDDER_BASE_URL"
+api_key = "env:EMBEDDER_API_KEY"
+model = "env:EMBEDDER_MODEL"
 dimension = 1536
 cache_size = 10000

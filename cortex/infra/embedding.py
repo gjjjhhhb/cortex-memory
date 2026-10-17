@@ -60,10 +60,13 @@ class GeminiEmbeddingProvider:
         self.client = httpx.AsyncClient(timeout=45.0)
 
     async def get_embedding(self, text: str) -> list[float]:
+        clean_base = self.cfg.base_url.rstrip("/")
+        if clean_base.endswith("/openai"):
+            clean_base = clean_base[: -len("/openai")]
         model_name = self.cfg.model
         if model_name.startswith("models/"):
             model_name = model_name[len("models/") :]
-        url = f"{self.cfg.base_url.rstrip('/')}/models/{model_name}:embedContent?key={self.cfg.api_key}"
+        url = f"{clean_base}/models/{model_name}:embedContent?key={self.cfg.api_key}"
         payload = {
             "model": f"models/{model_name}",
             "content": {"parts": [{"text": text}]},

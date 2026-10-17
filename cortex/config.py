@@ -68,10 +68,10 @@ class Config:
         )
 
 
-def _resolve_env_var(val: str) -> str:
+def _resolve_env_var(val: str, default: str = "") -> str:
     if isinstance(val, str) and val.startswith("env:"):
-        return os.environ.get(val[4:], "")
-    return val
+        return os.environ.get(val[4:], default) or default
+    return val or default
 
 
 def load_config(config_path: str | Path | None = None) -> Config:
@@ -131,15 +131,32 @@ def load_config(config_path: str | Path | None = None) -> Config:
             provider=os.environ.get(
                 "CORTEX_LLM_PROVIDER", llm_data.get("provider", "mock")
             ),
-            base_url=os.environ.get(
-                "CORTEX_LLM_BASE_URL",
-                llm_data.get("base_url", "https://api.openai.com/v1"),
+            base_url=_resolve_env_var(
+                os.environ.get(
+                    "CORTEX_LLM_BASE_URL",
+                    os.environ.get(
+                        "LLM_BASE_URL",
+                        os.environ.get("OPENAI_BASE_URL", llm_data.get("base_url", "")),
+                    ),
+                )
             ),
             api_key=_resolve_env_var(
-                os.environ.get("CORTEX_LLM_API_KEY", llm_data.get("api_key", ""))
+                os.environ.get(
+                    "CORTEX_LLM_API_KEY",
+                    os.environ.get(
+                        "LLM_API_KEY",
+                        os.environ.get("OPENAI_API_KEY", llm_data.get("api_key", "")),
+                    ),
+                )
             ),
-            model=os.environ.get(
-                "CORTEX_LLM_MODEL", llm_data.get("model", "gpt-4o-mini")
+            model=_resolve_env_var(
+                os.environ.get(
+                    "CORTEX_LLM_MODEL",
+                    os.environ.get(
+                        "LLM_MODEL",
+                        os.environ.get("OPENAI_MODEL", llm_data.get("model", "")),
+                    ),
+                )
             ),
             temperature=float(
                 os.environ.get(
@@ -155,18 +172,38 @@ def load_config(config_path: str | Path | None = None) -> Config:
             provider=os.environ.get(
                 "CORTEX_EMBEDDING_PROVIDER", embedding_data.get("provider", "mock")
             ),
-            base_url=os.environ.get(
-                "CORTEX_EMBEDDING_BASE_URL",
-                embedding_data.get("base_url", "https://api.openai.com/v1"),
+            base_url=_resolve_env_var(
+                os.environ.get(
+                    "CORTEX_EMBEDDING_BASE_URL",
+                    os.environ.get(
+                        "EMBEDDER_BASE_URL",
+                        os.environ.get(
+                            "EMBEDDING_BASE_URL", embedding_data.get("base_url", "")
+                        ),
+                    ),
+                )
             ),
             api_key=_resolve_env_var(
                 os.environ.get(
-                    "CORTEX_EMBEDDING_API_KEY", embedding_data.get("api_key", "")
+                    "CORTEX_EMBEDDING_API_KEY",
+                    os.environ.get(
+                        "EMBEDDER_API_KEY",
+                        os.environ.get(
+                            "EMBEDDING_API_KEY", embedding_data.get("api_key", "")
+                        ),
+                    ),
                 )
             ),
-            model=os.environ.get(
-                "CORTEX_EMBEDDING_MODEL",
-                embedding_data.get("model", "text-embedding-3-small"),
+            model=_resolve_env_var(
+                os.environ.get(
+                    "CORTEX_EMBEDDING_MODEL",
+                    os.environ.get(
+                        "EMBEDDER_MODEL",
+                        os.environ.get(
+                            "EMBEDDING_MODEL", embedding_data.get("model", "")
+                        ),
+                    ),
+                )
             ),
             dimension=int(
                 os.environ.get(
