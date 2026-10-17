@@ -1,18 +1,18 @@
 # Cortex Memory
 
-A lightweight, self-hosted long-term memory server for AI agents and coding assistants (Cursor, Claude Desktop, Antigravity), powered by an embedded **SurrealDB** engine (`surrealkv`).
+A lightweight, self-hosted long-term memory server for AI agents and coding assistants, powered by an embedded **SurrealDB** engine (`surrealkv`).
 
-Supports tri-temporal fact versioning, automatic reconciliation of conflicting behavioral instructions, hybrid search (vectors + BM25), and the **Model Context Protocol (MCP)** out of the box.
+Supports tri-temporal fact versioning, automatic reconciliation of conflicting behavioral instructions, hybrid search (vectors + BM25), and standard **Model Context Protocol (MCP)** integration.
 
 ---
 
 ## Features
 
-- **State-Aware Memory**: Ingests observations with automatic superseding of outdated facts (e.g., job role updates or moving cities).
-- **Instruction Reconciliation**: Detects and supersedes conflicting behavioral rules (e.g., *"Respond concisely"* $\rightarrow$ *"Respond with detailed code examples"*).
-- **Hybrid Retrieval**: Combines dense vector similarity and lexical BM25 matching (RRF) with 1-hop knowledge graph relation expansion.
-- **Native MCP Support**: Ready-to-use Model Context Protocol server via stdio or HTTP.
-- **Embedded & Local**: Runs self-contained on local disk using SurrealDB's embedded KV engine without needing external database services.
+- **State-Aware Memory**: Ingests observations with automatic superseding of outdated facts.
+- **Instruction Reconciliation**: Detects and supersedes conflicting behavioral rules.
+- **Hybrid Retrieval**: Combines vector similarity and BM25 ranking (RRF) with 1-hop graph relation expansion.
+- **MCP Support**: Ready-to-use Model Context Protocol server via stdio or HTTP.
+- **Embedded & Local**: Self-contained on local disk without external database services.
 
 ---
 
@@ -26,16 +26,13 @@ uv sync --extra dev
 
 ### 2. Configuration
 
-Set your provider API keys in `.env`:
+Set your provider credentials in `.env`:
 
 ```env
 OPENAI_API_KEY="sk-..."
-# or
-DEEPSEEK_API_KEY="sk-..."
-GEMINI_API_KEY="AIzaSy..."
 ```
 
-Server and provider settings are configured in `config.toml` (and can be overridden via `CORTEX_*` environment variables):
+Server and provider settings are configured in `config.toml` (or overridden via `CORTEX_*` environment variables):
 
 ```toml
 [server]
@@ -49,35 +46,35 @@ namespace = "cortex"
 
 [llm]
 provider = "openai"
-base_url = "https://api.deepseek.com/v1"
-api_key = "env:DEEPSEEK_API_KEY"
-model = "deepseek-chat"
+base_url = "https://api.openai.com/v1"
+api_key = "env:OPENAI_API_KEY"
+model = "gpt-4o-mini"
 
 [embedding]
 provider = "openai"
-base_url = "https://generativelanguage.googleapis.com/v1beta"
-api_key = "env:GEMINI_API_KEY"
-model = "gemini-embedding-001"
-dimension = 768
+base_url = "https://api.openai.com/v1"
+api_key = "env:OPENAI_API_KEY"
+model = "text-embedding-3-small"
+dimension = 1536
 ```
 
 ### 3. Run the Server
 
-**HTTP API server:**
+**HTTP API:**
 ```bash
 uv run cortex serve
 ```
 
-**MCP server (stdio for IDEs):**
+**MCP Server (stdio):**
 ```bash
 uv run cortex mcp --context dev
 ```
 
 ---
 
-## Connecting to Cursor & Claude Desktop
+## IDE Integration (MCP)
 
-Add to your MCP configuration (`claude_desktop_config.json` or `.cursor/mcp.json`):
+Add to your editor's MCP settings:
 
 ```json
 {
@@ -103,16 +100,16 @@ Add to your MCP configuration (`claude_desktop_config.json` or `.cursor/mcp.json
 ## CLI Commands
 
 ```bash
-# Ingest an observation
-uv run cortex remember "User writes Python and Rust"
+# Store observation
+uv run cortex remember "User prefers Python and Rust"
 
 # Semantic search
-uv run cortex recall "What programming languages does the user know?"
+uv run cortex recall "What programming languages does the user prefer?"
 
-# Assemble prompt memory block for LLMs
+# Context prompt generation
 uv run cortex context "Technical stack"
 
-# Forget outdated memories
+# Forget memories
 uv run cortex forget "outdated preference"
 ```
 
