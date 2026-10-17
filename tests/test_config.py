@@ -55,3 +55,4 @@ async def direct_engines(mock_config):
         "config": mock_config,
     }
     await store.close()
+§
