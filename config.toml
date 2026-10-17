@@ -1,0 +1,25 @@
+[server]
+host = "127.0.0.1"
+port = 8080
+api_key = "api_key"
+default_context = "personal"
+
+[database]
+url = "surrealkv://./data/cortex.db"
+namespace = "cortex"
+
+[llm]
+provider = "openai"
+base_url = "https://api.deepseek.com/v1"
+api_key = "env:DEEPSEEK_API_KEY"
+model = "deepseek-chat"
+temperature = 0.0
+structured_output_mode = "json_object"
+
+[embedding]
+provider = "openai"
+base_url = "https://generativelanguage.googleapis.com/v1beta"
+api_key = "env:GEMINI_API_KEY"
+model = "gemini-embedding-001"
+dimension = 768
+cache_size = 10000
