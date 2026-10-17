@@ -125,6 +125,56 @@ uv run cortex context "Technical stack"
 uv run cortex forget "outdated preference"
 ```
 
+## Python SDK (Client Usage)
+
+Cortex is 100% wire-compatible with the client SDK (`surrealdb[memory]`):
+
+```bash
+uv add --prerelease=allow 'surrealdb[memory]'
+```
+
+### Async Client (`AsyncMemory`)
+
+```python
+import asyncio
+from surrealdb.memory import AsyncMemory
+
+async def main():
+    async with AsyncMemory(
+        endpoint="http://127.0.0.1:8080",
+        context="personal",
+        api_key="cortex-local-dev-key",
+    ) as memory:
+        # Ingest observation
+        await memory.remember("User is a systems architect working on distributed databases")
+
+        # Hybrid recall
+        hits = await memory.recall("What is the user's role?", k=5)
+        for hit in hits.hits:
+            print(hit.score, hit.text)
+
+        # Assemble prompt context block
+        ctx = await memory.query_context("What is the user's role?")
+        print(ctx)
+
+if __name__ == "__main__":
+    asyncio.run(main())
+```
+
+### Sync Client (`Memory`)
+
+```python
+from surrealdb.memory import Memory
+
+with Memory(
+    endpoint="http://127.0.0.1:8080",
+    context="personal",
+    api_key="cortex-local-dev-key",
+) as memory:
+    memory.remember("Alice was promoted to CTO.")
+    hits = memory.recall("What is Alice's role?", k=5)
+```
+
 ---
 
 ## Testing
