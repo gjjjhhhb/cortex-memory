@@ -13,8 +13,8 @@ async def test_error_format_compatibility(app_client: AsyncClient):
 
 
 @pytest.mark.asyncio
-async def test_infer_preview_mode(app_client: AsyncClient):
-    headers = {"Authorization": "Bearer cortex-local-dev-key"}
+async def test_infer_preview_mode(app_client: AsyncClient, auth_headers: dict):
+    headers = auth_headers
     ctx = "test_preview"
 
     resp = await app_client.post(
@@ -38,8 +38,8 @@ async def test_infer_preview_mode(app_client: AsyncClient):
 
 
 @pytest.mark.asyncio
-async def test_infer_triples_mode(app_client: AsyncClient):
-    headers = {"Authorization": "Bearer cortex-local-dev-key"}
+async def test_infer_triples_mode(app_client: AsyncClient, auth_headers: dict):
+    headers = auth_headers
     ctx = "test_triples"
 
     payload = {
@@ -84,8 +84,8 @@ async def test_infer_triples_mode(app_client: AsyncClient):
 
 
 @pytest.mark.asyncio
-async def test_remember_batch_whole_conversation(app_client: AsyncClient):
-    headers = {"Authorization": "Bearer cortex-local-dev-key"}
+async def test_remember_batch_whole_conversation(app_client: AsyncClient, auth_headers: dict):
+    headers = auth_headers
     ctx = "test_conv_batch"
 
     payload = {
@@ -116,8 +116,8 @@ async def test_remember_batch_whole_conversation(app_client: AsyncClient):
 
 
 @pytest.mark.asyncio
-async def test_forget_dry_run_and_purge(app_client: AsyncClient):
-    headers = {"Authorization": "Bearer cortex-local-dev-key"}
+async def test_forget_dry_run_and_purge(app_client: AsyncClient, auth_headers: dict):
+    headers = auth_headers
     ctx = "test_forget_dry"
 
     await app_client.post(
@@ -159,8 +159,8 @@ async def test_forget_dry_run_and_purge(app_client: AsyncClient):
 
 
 @pytest.mark.asyncio
-async def test_lookup_and_introspection(app_client: AsyncClient):
-    headers = {"Authorization": "Bearer cortex-local-dev-key"}
+async def test_lookup_and_introspection(app_client: AsyncClient, auth_headers: dict):
+    headers = auth_headers
     ctx = "test_introspection"
 
     await app_client.post(
@@ -217,8 +217,8 @@ async def test_lookup_and_introspection(app_client: AsyncClient):
 
 
 @pytest.mark.asyncio
-async def test_reflect_and_chat_endpoints(app_client: AsyncClient):
-    headers = {"Authorization": "Bearer cortex-local-dev-key"}
+async def test_reflect_and_chat_endpoints(app_client: AsyncClient, auth_headers: dict):
+    headers = auth_headers
     ctx = "test_cognitive"
 
     await app_client.post(
@@ -252,8 +252,8 @@ async def test_reflect_and_chat_endpoints(app_client: AsyncClient):
 
 
 @pytest.mark.asyncio
-async def test_uncertainties_traces_and_lifecycle(app_client: AsyncClient):
-    headers = {"Authorization": "Bearer cortex-local-dev-key"}
+async def test_uncertainties_traces_and_lifecycle(app_client: AsyncClient, auth_headers: dict):
+    headers = auth_headers
     ctx = "test_ops"
 
     await app_client.post(
@@ -295,8 +295,8 @@ async def test_uncertainties_traces_and_lifecycle(app_client: AsyncClient):
 
 
 @pytest.mark.asyncio
-async def test_mcp_reflect_tool(app_client: AsyncClient):
-    headers = {"Authorization": "Bearer cortex-local-dev-key"}
+async def test_mcp_reflect_tool(app_client: AsyncClient, auth_headers: dict):
+    headers = auth_headers
 
     call_msg = {
         "jsonrpc": "2.0",

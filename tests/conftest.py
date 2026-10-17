@@ -24,6 +24,11 @@ def mock_config():
 
 
 @pytest.fixture
+def auth_headers(mock_config):
+    return {"Authorization": f"Bearer {mock_config.server.api_key}"}
+
+
+@pytest.fixture
 async def app_client(mock_config):
     app = create_app(mock_config)
     transport = ASGITransport(app=app)
@@ -55,4 +60,3 @@ async def direct_engines(mock_config):
         "config": mock_config,
     }
     await store.close()
-§

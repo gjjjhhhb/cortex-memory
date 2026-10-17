@@ -10,14 +10,13 @@ async def test_api_health(app_client: AsyncClient):
 
 
 @pytest.mark.asyncio
-async def test_api_remember_recall_and_context(app_client: AsyncClient):
-    headers = {"Authorization": "Bearer cortex-local-dev-key"}
+async def test_api_remember_recall_and_context(app_client: AsyncClient, auth_headers: dict):
     ctx = "dev"
 
     rem_resp = await app_client.post(
         f"/api/v1/{ctx}/facts",
         json={"text": "User is a Senior Backend Engineer in Berlin", "infer": "full"},
-        headers=headers,
+        headers=auth_headers,
     )
     assert rem_resp.status_code == 200
     rem_data = rem_resp.json()
@@ -27,7 +26,7 @@ async def test_api_remember_recall_and_context(app_client: AsyncClient):
     rec_resp = await app_client.post(
         f"/api/v1/{ctx}/query",
         json={"query": "Berlin", "k": 5},
-        headers=headers,
+        headers=auth_headers,
     )
     assert rec_resp.status_code == 200
     rec_data = rec_resp.json()
@@ -38,7 +37,7 @@ async def test_api_remember_recall_and_context(app_client: AsyncClient):
     ctx_resp = await app_client.post(
         f"/api/v1/{ctx}/context",
         json={"query": "What is the user's role and location?", "k": 5},
-        headers=headers,
+        headers=auth_headers,
     )
     assert ctx_resp.status_code == 200
     ctx_data = ctx_resp.json()
@@ -47,27 +46,26 @@ async def test_api_remember_recall_and_context(app_client: AsyncClient):
 
 
 @pytest.mark.asyncio
-async def test_api_forget(app_client: AsyncClient):
-    headers = {"Authorization": "Bearer cortex-local-dev-key"}
+async def test_api_forget(app_client: AsyncClient, auth_headers: dict):
     ctx = "dev"
 
     await app_client.post(
         f"/api/v1/{ctx}/facts",
         json={"text": "User loves chocolate ice cream", "infer": "none"},
-        headers=headers,
+        headers=auth_headers,
     )
 
     rec1 = await app_client.post(
         f"/api/v1/{ctx}/query",
         json={"query": "chocolate ice cream"},
-        headers=headers,
+        headers=auth_headers,
     )
     assert len(rec1.json()["hits"]) > 0
 
     forget_resp = await app_client.post(
         f"/api/v1/{ctx}/forget",
         json={"query": "chocolate ice cream", "purge": True},
-        headers=headers,
+        headers=auth_headers,
     )
     assert forget_resp.status_code == 200
     assert forget_resp.json()["deleted"] >= 1
@@ -75,15 +73,15 @@ async def test_api_forget(app_client: AsyncClient):
     rec2 = await app_client.post(
         f"/api/v1/{ctx}/query",
         json={"query": "chocolate ice cream"},
-        headers=headers,
+        headers=auth_headers,
     )
     assert len(rec2.json()["hits"]) == 0
 
 
 @pytest.mark.asyncio
-async def test_api_idempotency_key(app_client: AsyncClient):
+async def test_api_idempotency_key(app_client: AsyncClient, auth_headers: dict):
     headers = {
-        "Authorization": "Bearer cortex-local-dev-key",
+        **auth_headers,
         "Idempotency-Key": "idemp-test-uuid-1234",
     }
     ctx = "dev"

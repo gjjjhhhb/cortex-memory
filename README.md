@@ -21,6 +21,8 @@ Supports tri-temporal fact versioning, automatic reconciliation of conflicting b
 ### 1. Installation
 
 ```bash
+git clone https://github.com/gjjjhhhb/cortex-memory.git
+cd cortex-memory
 uv sync --extra dev
 ```
 
@@ -29,7 +31,8 @@ uv sync --extra dev
 Set your provider credentials in `.env`:
 
 ```env
-OPENAI_API_KEY="sk-..."
+OPENAI_API_KEY="your_llm_api_key_here"
+EMBEDDING_API_KEY="your_embedding_api_key_here"
 ```
 
 Server and provider settings are configured in `config.toml` (or overridden via `CORTEX_*` environment variables):
@@ -39,6 +42,7 @@ Server and provider settings are configured in `config.toml` (or overridden via 
 host = "127.0.0.1"
 port = 8080
 api_key = "cortex-local-dev-key"
+default_context = "dev"
 
 [database]
 url = "surrealkv://./data/cortex.db"
@@ -49,13 +53,15 @@ provider = "openai"
 base_url = "https://api.openai.com/v1"
 api_key = "env:OPENAI_API_KEY"
 model = "gpt-4o-mini"
+temperature = 0.0
 
 [embedding]
 provider = "openai"
 base_url = "https://api.openai.com/v1"
-api_key = "env:OPENAI_API_KEY"
+api_key = "env:EMBEDDING_API_KEY"
 model = "text-embedding-3-small"
 dimension = 1536
+cache_size = 10000
 ```
 
 ### 3. Run the Server

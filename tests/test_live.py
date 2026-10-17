@@ -9,12 +9,8 @@ from cortex import create_app, get_ai_provider
 @pytest.fixture(scope="session")
 def live_config():
     cfg = load_config()
-    has_gemini = bool(os.getenv("GEMINI_API_KEY") or os.getenv("GOOGLE_API_KEY"))
-    has_openai = bool(os.getenv("OPENAI_API_KEY"))
-    has_deepseek = bool(os.getenv("DEEPSEEK_API_KEY"))
-
-    if not (has_gemini or has_openai or has_deepseek):
-        pytest.skip("No live LLM or Embedding API keys found in environment.")
+    if not (cfg.llm.api_key and cfg.embedding.api_key):
+        pytest.skip("No live LLM or Embedding API keys found in config/environment.")
     return cfg
 
 
