@@ -29,7 +29,7 @@ class LLMConfig:
     provider: str = "mock"
     base_url: str = "https://api.openai.com/v1"
     api_key: str = ""
-    model: str = "gpt-4o-mini"
+    model: str = "deepseek-flash"
     temperature: float = 0.0
     structured_output_mode: str = "json_object"
 
