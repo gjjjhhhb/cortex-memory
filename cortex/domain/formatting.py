@@ -43,8 +43,13 @@ def format_scope(scopes: Any) -> str:
 
 
 def normalize_entity_id(name: str) -> str:
-    clean = str(name).strip().lower().replace(" ", "_")
-    return f"entity:{clean}"
+    raw = str(name).strip().lower()
+    user_aliases = {"user", "i", "me", "my", "self", "пользователь", "я", "мне", "меня"}
+    if raw in user_aliases or raw.endswith(":user"):
+        return "entity:user"
+    clean = raw.replace("entity:", "")
+    clean = "".join(c if c.isalnum() else "_" for c in clean).strip("_")
+    return f"entity:{clean or 'item'}"
 
 
 def build_markdown_context(

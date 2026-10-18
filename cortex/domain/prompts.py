@@ -57,11 +57,17 @@ You must return a JSON object strictly matching this schema:
 }
 
 CRITICAL RULES:
-1. SUPERSEDING FACTS (1:1 state): If the user changes an exclusive state (e.g. current city, current role, current company, status) and an existing fact in `existing_facts` contradicts it, you MUST use "op": "SUPERSEDE" and set `target_attribute_id` to the old fact's `id`.
-2. ADDING FACTS (1:N cumulative state): If the fact is cumulative (e.g. learning another programming language, adding a hobby, mentioning another project), use "op": "ADD" and DO NOT supersede existing facts.
-3. INSTRUCTIONS & SUPERSEDING RULES: If the user commands how the assistant should behave (e.g. "Always respond in Russian", "Keep answers short"), put it in `instructions` (NOT in `fact_operations`). If a new instruction contradicts an existing one in `existing_instructions` (e.g. "Answer in detail, not briefly" vs "Keep answers short"), use "op": "SUPERSEDE" and set `target_instruction_id` to the old instruction's `id`.
-4. RELATIVE DATES: Resolve all relative time words ("yesterday", "last week", "in 2022") relative to `anchor_time` into absolute ISO-8601 datetimes.
-5. SOURCE QUOTE: Make sure `source_quote` is an exact substring from `input_text`.
+1. CANONICAL NORMALIZATION & LANGUAGE INDEPENDENCE:
+   - Regardless of the user's input language (Russian, Spanish, etc.), normalize all entity names, attribute keys, and relation predicates into canonical English snake_case/PascalCase.
+   - For the user themselves ("я", "меня", "мне", "пользователь", "I", "me", "my"), ALWAYS use entity: "User".
+   - Keys must be concise English snake_case (e.g. `name`, `country`, `city`, `preferred_languages`, `job_role`, `employer`, `email`, `hobby`).
+   - Relation predicates must be canonical English verbs (e.g. `lives_in`, `works_at`, `knows`, `speaks`, `prefers`).
+   - Keep the extracted `value`, `statement`, and `source_quote` in natural language preserving the user's intent.
+2. SUPERSEDING FACTS (1:1 state): If the user changes an exclusive state (e.g. current city, current role, current company, status) and an existing fact in `existing_facts` contradicts it, you MUST use "op": "SUPERSEDE" and set `target_attribute_id` to the old fact's `id`.
+3. ADDING FACTS (1:N cumulative state): If the fact is cumulative (e.g. learning another programming language, adding a hobby, mentioning another project), use "op": "ADD" and DO NOT supersede existing facts.
+4. INSTRUCTIONS & SUPERSEDING RULES: If the user commands how the assistant should behave (e.g. "Always respond in Russian", "Keep answers short"), put it in `instructions` (NOT in `fact_operations`). If a new instruction contradicts an existing one in `existing_instructions` (e.g. "Answer in detail, not briefly" vs "Keep answers short"), use "op": "SUPERSEDE" and set `target_instruction_id` to the old instruction's `id`.
+5. RELATIVE DATES: Resolve all relative time words ("yesterday", "last week", "in 2022") relative to `anchor_time` into absolute ISO-8601 datetimes.
+6. SOURCE QUOTE: Make sure `source_quote` is an exact substring from `input_text`.
 """
 
 REFLECT_SYSTEM_PROMPT = """You are Cortex Reflection Engine.
