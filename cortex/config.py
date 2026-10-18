@@ -1,13 +1,22 @@
 import os
-from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
 
 import tomllib
+from dotenv import load_dotenv
+from pydantic import BaseModel, Field
 
 
-@dataclass
-class ServerConfig:
+def _resolve(val: Any, default: Any = "") -> Any:
+    if val is None:
+        return default
+    s = str(val)
+    if s.startswith("env:"):
+        return os.environ.get(s[4:], default) or default
+    return val
+
+
+class ServerSettings(BaseModel):
     host: str = "127.0.0.1"
     port: int = 8080
     api_key: str = "cortex-local-dev-key"
@@ -15,8 +24,7 @@ class ServerConfig:
     mcp_mode: str = "compact"
 
 
-@dataclass
-class DatabaseConfig:
+class DatabaseSettings(BaseModel):
     url: str = "surrealkv://./data/cortex.db"
     namespace: str = "cortex"
     database: str = "cortex"
@@ -24,196 +32,177 @@ class DatabaseConfig:
     password: str | None = None
 
 
-@dataclass
-class LLMConfig:
+class LLMSettings(BaseModel):
     provider: str = "mock"
-    base_url: str = "https://api.openai.com/v1"
+    base_url: str = ""
     api_key: str = ""
-    model: str = "deepseek-flash"
+    model: str = ""
     temperature: float = 0.0
     structured_output_mode: str = "json_object"
 
 
-@dataclass
-class EmbeddingConfig:
+class EmbeddingSettings(BaseModel):
     provider: str = "mock"
-    base_url: str = "https://api.openai.com/v1"
+    base_url: str = ""
     api_key: str = ""
-    model: str = "text-embedding-3-small"
+    model: str = ""
     dimension: int = 1536
     cache_size: int = 10000
 
 
-@dataclass
-class Config:
-    server: ServerConfig = field(default_factory=ServerConfig)
-    database: DatabaseConfig = field(default_factory=DatabaseConfig)
-    llm: LLMConfig = field(default_factory=LLMConfig)
-    embedding: EmbeddingConfig = field(default_factory=EmbeddingConfig)
+class Settings(BaseModel):
+    server: ServerSettings = Field(default_factory=ServerSettings)
+    database: DatabaseSettings = Field(default_factory=DatabaseSettings)
+    llm: LLMSettings = Field(default_factory=LLMSettings)
+    embedding: EmbeddingSettings = Field(default_factory=EmbeddingSettings)
 
-    def with_memory_db(self, namespace: str = "test") -> "Config":
-        return Config(
-            server=self.server,
-            database=DatabaseConfig(url="mem://", namespace=namespace),
-            llm=self.llm,
-            embedding=self.embedding,
+    def with_memory_db(self, namespace: str = "test") -> "Settings":
+        return Settings(
+            server=self.server.model_copy(),
+            database=DatabaseSettings(
+                url="mem://", namespace=namespace, database=self.database.database
+            ),
+            llm=self.llm.model_copy(),
+            embedding=self.embedding.model_copy(),
         )
 
-    def with_mock_providers(self, dimension: int = 1536) -> "Config":
-        return Config(
-            server=self.server,
-            database=self.database,
-            llm=LLMConfig(provider="mock"),
-            embedding=EmbeddingConfig(provider="mock", dimension=dimension),
+    def with_mock_providers(self, dimension: int = 1536) -> "Settings":
+        return Settings(
+            server=self.server.model_copy(),
+            database=self.database.model_copy(),
+            llm=LLMSettings(provider="mock"),
+            embedding=EmbeddingSettings(provider="mock", dimension=dimension),
         )
 
 
-def _resolve_env_var(val: str, default: str = "") -> str:
-    if isinstance(val, str) and val.startswith("env:"):
-        return os.environ.get(val[4:], default) or default
-    return val or default
+ServerConfig = ServerSettings
+DatabaseConfig = DatabaseSettings
+LLMConfig = LLMSettings
+EmbeddingConfig = EmbeddingSettings
+Config = Settings
 
 
-def load_config(config_path: str | Path | None = None) -> Config:
-    try:
-        from dotenv import load_dotenv
-
-        load_dotenv()
-    except Exception:
-        pass
-
+def load_config(config_path: str | Path | None = None) -> Settings:
+    load_dotenv()
     path = Path(config_path) if config_path else Path("config.toml")
     data: dict[str, Any] = {}
     if path.exists():
         with open(path, "rb") as f:
             data = tomllib.load(f)
 
-    server_data = data.get("server", {})
-    database_data = data.get("database", {})
-    llm_data = data.get("llm", {})
-    embedding_data = data.get("embedding", {})
+    srv = data.get("server", {})
+    db = data.get("database", {})
+    llm = data.get("llm", {})
+    emb = data.get("embedding", {})
 
-    return Config(
-        server=ServerConfig(
-            host=os.environ.get("CORTEX_HOST", server_data.get("host", "127.0.0.1")),
-            port=int(os.environ.get("CORTEX_PORT", server_data.get("port", 8080))),
-            api_key=_resolve_env_var(
-                os.environ.get(
-                    "CORTEX_API_KEY", server_data.get("api_key", "cortex-local-dev-key")
+    return Settings(
+        server=ServerSettings(
+            host=os.environ.get("CORTEX_HOST")
+            or _resolve(srv.get("host"), "127.0.0.1"),
+            port=int(os.environ.get("CORTEX_PORT") or _resolve(srv.get("port"), 8080)),
+            api_key=str(
+                _resolve(
+                    os.environ.get("CORTEX_API_KEY") or srv.get("api_key"),
+                    "cortex-local-dev-key",
                 )
             ),
-            default_context=os.environ.get(
-                "CORTEX_DEFAULT_CONTEXT", server_data.get("default_context", "dev")
-            ),
-            mcp_mode=os.environ.get(
-                "CORTEX_MCP_MODE", server_data.get("mcp_mode", "compact")
-            ),
+            default_context=os.environ.get("CORTEX_DEFAULT_CONTEXT")
+            or _resolve(srv.get("default_context"), "dev"),
+            mcp_mode=os.environ.get("CORTEX_MCP_MODE")
+            or _resolve(srv.get("mcp_mode"), "compact"),
         ),
-        database=DatabaseConfig(
-            url=os.environ.get(
-                "CORTEX_DB_URL",
-                database_data.get("url", "surrealkv://./data/cortex.db"),
-            ),
-            namespace=os.environ.get(
-                "CORTEX_DB_NAMESPACE", database_data.get("namespace", "cortex")
-            ),
-            database=os.environ.get(
-                "CORTEX_DB_DATABASE", database_data.get("database", "cortex")
-            ),
-            username=os.environ.get(
-                "CORTEX_DB_USERNAME", database_data.get("username", None)
-            ),
-            password=os.environ.get(
-                "CORTEX_DB_PASSWORD", database_data.get("password", None)
-            ),
+        database=DatabaseSettings(
+            url=os.environ.get("CORTEX_DB_URL")
+            or _resolve(db.get("url"), "surrealkv://./data/cortex.db"),
+            namespace=os.environ.get("CORTEX_DB_NAMESPACE")
+            or _resolve(db.get("namespace"), "cortex"),
+            database=os.environ.get("CORTEX_DB_DATABASE")
+            or _resolve(db.get("database"), "cortex"),
+            username=os.environ.get("CORTEX_DB_USERNAME") or db.get("username"),
+            password=os.environ.get("CORTEX_DB_PASSWORD") or db.get("password"),
         ),
-        llm=LLMConfig(
-            provider=os.environ.get(
-                "CORTEX_LLM_PROVIDER", llm_data.get("provider", "mock")
-            ),
-            base_url=_resolve_env_var(
-                os.environ.get(
-                    "CORTEX_LLM_BASE_URL",
-                    os.environ.get(
-                        "LLM_BASE_URL",
-                        os.environ.get("OPENAI_BASE_URL", llm_data.get("base_url", "")),
-                    ),
+        llm=LLMSettings(
+            provider=os.environ.get("CORTEX_LLM_PROVIDER")
+            or _resolve(llm.get("provider"), "mock"),
+            base_url=str(
+                _resolve(
+                    os.environ.get("CORTEX_LLM_BASE_URL")
+                    or os.environ.get("LLM_BASE_URL")
+                    or os.environ.get("OPENAI_BASE_URL")
+                    or llm.get("base_url"),
+                    "",
                 )
             ),
-            api_key=_resolve_env_var(
-                os.environ.get(
-                    "CORTEX_LLM_API_KEY",
-                    os.environ.get(
-                        "LLM_API_KEY",
-                        os.environ.get("OPENAI_API_KEY", llm_data.get("api_key", "")),
-                    ),
+            api_key=str(
+                _resolve(
+                    os.environ.get("CORTEX_LLM_API_KEY")
+                    or os.environ.get("LLM_API_KEY")
+                    or os.environ.get("OPENAI_API_KEY")
+                    or llm.get("api_key"),
+                    "",
                 )
             ),
-            model=_resolve_env_var(
-                os.environ.get(
-                    "CORTEX_LLM_MODEL",
-                    os.environ.get(
-                        "LLM_MODEL",
-                        os.environ.get("OPENAI_MODEL", llm_data.get("model", "")),
-                    ),
+            model=str(
+                _resolve(
+                    os.environ.get("CORTEX_LLM_MODEL")
+                    or os.environ.get("LLM_MODEL")
+                    or os.environ.get("OPENAI_MODEL")
+                    or llm.get("model"),
+                    "",
                 )
             ),
             temperature=float(
-                os.environ.get(
-                    "CORTEX_LLM_TEMPERATURE", llm_data.get("temperature", 0.0)
-                )
+                os.environ.get("CORTEX_LLM_TEMPERATURE")
+                or _resolve(llm.get("temperature"), 0.0)
             ),
-            structured_output_mode=os.environ.get(
-                "CORTEX_LLM_STRUCTURED_OUTPUT_MODE",
-                llm_data.get("structured_output_mode", "json_object"),
+            structured_output_mode=str(
+                os.environ.get("CORTEX_LLM_STRUCTURED_OUTPUT_MODE")
+                or _resolve(llm.get("structured_output_mode"), "json_object")
             ),
         ),
-        embedding=EmbeddingConfig(
-            provider=os.environ.get(
-                "CORTEX_EMBEDDING_PROVIDER", embedding_data.get("provider", "mock")
-            ),
-            base_url=_resolve_env_var(
-                os.environ.get(
-                    "CORTEX_EMBEDDING_BASE_URL",
-                    os.environ.get(
-                        "EMBEDDER_BASE_URL",
-                        os.environ.get(
-                            "EMBEDDING_BASE_URL", embedding_data.get("base_url", "")
-                        ),
-                    ),
+        embedding=EmbeddingSettings(
+            provider=os.environ.get("CORTEX_EMBEDDING_PROVIDER")
+            or _resolve(emb.get("provider"), "mock"),
+            base_url=str(
+                _resolve(
+                    os.environ.get("CORTEX_EMBEDDING_BASE_URL")
+                    or os.environ.get("EMBEDDER_BASE_URL")
+                    or os.environ.get("EMBEDDING_BASE_URL")
+                    or emb.get("base_url"),
+                    "",
                 )
             ),
-            api_key=_resolve_env_var(
-                os.environ.get(
-                    "CORTEX_EMBEDDING_API_KEY",
-                    os.environ.get(
-                        "EMBEDDER_API_KEY",
-                        os.environ.get(
-                            "EMBEDDING_API_KEY", embedding_data.get("api_key", "")
-                        ),
-                    ),
+            api_key=str(
+                _resolve(
+                    os.environ.get("CORTEX_EMBEDDING_API_KEY")
+                    or os.environ.get("EMBEDDER_API_KEY")
+                    or os.environ.get("EMBEDDING_API_KEY")
+                    or emb.get("api_key"),
+                    "",
                 )
             ),
-            model=_resolve_env_var(
-                os.environ.get(
-                    "CORTEX_EMBEDDING_MODEL",
-                    os.environ.get(
-                        "EMBEDDER_MODEL",
-                        os.environ.get(
-                            "EMBEDDING_MODEL", embedding_data.get("model", "")
-                        ),
-                    ),
+            model=str(
+                _resolve(
+                    os.environ.get("CORTEX_EMBEDDING_MODEL")
+                    or os.environ.get("EMBEDDER_MODEL")
+                    or os.environ.get("EMBEDDING_MODEL")
+                    or emb.get("model"),
+                    "",
                 )
             ),
             dimension=int(
-                os.environ.get(
-                    "CORTEX_EMBEDDING_DIMENSION", embedding_data.get("dimension", 1536)
+                _resolve(
+                    os.environ.get("CORTEX_EMBEDDING_DIMENSION")
+                    or os.environ.get("EMBEDDER_DIMENSION")
+                    or emb.get("dimension"),
+                    1536,
                 )
             ),
             cache_size=int(
-                os.environ.get(
-                    "CORTEX_EMBEDDING_CACHE_SIZE",
-                    embedding_data.get("cache_size", 10000),
+                _resolve(
+                    os.environ.get("CORTEX_EMBEDDING_CACHE_SIZE")
+                    or emb.get("cache_size"),
+                    10000,
                 )
             ),
         ),

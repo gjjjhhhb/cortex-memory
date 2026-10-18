@@ -3,10 +3,12 @@ host = "127.0.0.1"
 port = 8080
 api_key = "cortex-local-dev-key"
 default_context = "dev"
+mcp_mode = "compact"
 
 [database]
 url = "surrealkv://./data/cortex.db"
 namespace = "cortex"
+database = "cortex"
 
 [llm]
 provider = "openai"
@@ -21,5 +23,5 @@ provider = "openai"
 base_url = "env:EMBEDDER_BASE_URL"
 api_key = "env:EMBEDDER_API_KEY"
 model = "env:EMBEDDER_MODEL"
-dimension = 1536
+dimension = "env:EMBEDDER_DIMENSION"
 cache_size = 10000
