@@ -1,4 +1,5 @@
 import json
+import re
 from datetime import datetime
 from typing import Any, Protocol
 import httpx
@@ -214,10 +215,23 @@ class OpenAiLLMProvider:
         url = f"{self.cfg.base_url.rstrip('/')}/chat/completions"
 
         resp = await self.client.post(url, json=payload, headers=headers)
-        resp.raise_for_status()
+        if resp.is_error:
+            raise RuntimeError(
+                f"LLM API error ({resp.status_code}) from {url}: {resp.text}"
+            )
         res_data = resp.json()
         content = res_data["choices"][0]["message"]["content"]
-        parsed_json = json.loads(content)
+        cleaned = content.strip()
+        if "</thought>" in cleaned:
+            cleaned = cleaned.split("</thought>", 1)[1].strip()
+        if cleaned.startswith("```"):
+            cleaned = re.sub(r"^```(?:json)?\s*", "", cleaned)
+            cleaned = re.sub(r"\s*```$", "", cleaned)
+        first_brace = cleaned.find("{")
+        last_brace = cleaned.rfind("}")
+        if first_brace != -1 and last_brace != -1 and last_brace > first_brace:
+            cleaned = cleaned[first_brace : last_brace + 1]
+        parsed_json = json.loads(cleaned)
         return LLMExtractionPayload.model_validate(parsed_json)
 
     async def complete_text(self, system_prompt: str, user_prompt: str) -> str:
@@ -235,7 +249,10 @@ class OpenAiLLMProvider:
         }
         url = f"{self.cfg.base_url.rstrip('/')}/chat/completions"
         resp = await self.client.post(url, json=payload, headers=headers)
-        resp.raise_for_status()
+        if resp.is_error:
+            raise RuntimeError(
+                f"LLM API error ({resp.status_code}) from {url}: {resp.text}"
+            )
         res_data = resp.json()
         return res_data["choices"][0]["message"]["content"]
 
