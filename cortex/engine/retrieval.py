@@ -169,15 +169,12 @@ class RetrievalEngine:
         identities = await self.store.query(
             "SELECT * FROM attribute WHERE memory_category = 'identity' AND valid_until IS NONE;"
         )
-        active_contexts = await self.store.query(
-            "SELECT * FROM attribute WHERE memory_category = 'context' AND valid_until IS NONE;"
-        )
 
         recall_res = await self.recall(
             context_id, RecallRequest(query=req.query, k=req.k, as_of=req.as_of)
         )
         context_str = build_markdown_context(
-            instructions, identities, active_contexts, recall_res.hits
+            instructions, identities, [], recall_res.hits
         )
         elapsed_ms = int((time.perf_counter() - t0) * 1000)
 

@@ -224,6 +224,8 @@ class OpenAiLLMProvider:
         cleaned = content.strip()
         if "</thought>" in cleaned:
             cleaned = cleaned.split("</thought>", 1)[1].strip()
+        if "</think>" in cleaned:
+            cleaned = cleaned.split("</think>", 1)[1].strip()
         if cleaned.startswith("```"):
             cleaned = re.sub(r"^```(?:json)?\s*", "", cleaned)
             cleaned = re.sub(r"\s*```$", "", cleaned)
@@ -254,7 +256,13 @@ class OpenAiLLMProvider:
                 f"LLM API error ({resp.status_code}) from {url}: {resp.text}"
             )
         res_data = resp.json()
-        return res_data["choices"][0]["message"]["content"]
+        raw_content = res_data["choices"][0]["message"]["content"]
+        cleaned = raw_content.strip()
+        if "</thought>" in cleaned:
+            cleaned = cleaned.split("</thought>", 1)[1].strip()
+        if "</think>" in cleaned:
+            cleaned = cleaned.split("</think>", 1)[1].strip()
+        return cleaned
 
 
 def build_llm_provider(cfg: LLMConfig) -> LLMProvider:

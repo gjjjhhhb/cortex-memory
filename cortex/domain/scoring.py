@@ -134,6 +134,8 @@ def rank_candidates(
                 valid_until=parse_iso(cand.get("valid_until")),
                 occurred_at=parse_iso(cand.get("created_at")),
                 source_span=cand.get("source_span"),
+                vec_score=round(float(cand.get("_vec_score", 0.0)), 4),
+                bm25_score=round(float(cand.get("_bm25_score", 0.0)), 4),
             )
         )
     return hits

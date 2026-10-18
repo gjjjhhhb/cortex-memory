@@ -94,6 +94,7 @@ def build_markdown_context(
         if (getattr(h, "statement", None) or getattr(h, "text", "")).strip().lower()
         not in seen
         and getattr(h, "id", "") not in seen
+        and (getattr(h, "bm25_score", 0.0) > 0.0 or getattr(h, "vec_score", 0.0) >= 0.45 or getattr(h, "score", 0.0) >= 0.5)
     ]
 
     if deduped:

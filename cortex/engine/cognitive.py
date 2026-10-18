@@ -101,9 +101,15 @@ class CognitiveEngine:
         )
         reply = await self.ai.complete_text(CHAT_SYSTEM_PROMPT, user_prompt)
 
+        used_citations = [
+            c for c in citations if f"[{c['marker']}]" in reply
+        ]
+        if not used_citations and citations:
+            used_citations = citations
+
         return ChatResponse(
             reply=reply,
-            citations=citations,
+            citations=used_citations,
             session_id=session_id,
             trace_id=trace_id,
         )

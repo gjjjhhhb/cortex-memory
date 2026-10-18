@@ -173,6 +173,8 @@ class RecallHit(CamelModel):
     valid_until: datetime | None = None
     occurred_at: datetime | None = None
     source_span: list[int] | None = None
+    vec_score: float = 0.0
+    bm25_score: float = 0.0
 
 
 class TraceInfo(CamelModel):
